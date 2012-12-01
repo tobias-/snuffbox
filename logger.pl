@@ -4,28 +4,38 @@ use strict;
 use TryCatch;
 use Data::Dumper;
 use Carp::Always;
-
 use CouchDB::Client;
+
 
 my $name = 'local';
 if (scalar @ARGV > 0) {
 	$name = $ARGV[0];
 }
 
-my $heater = 1;
+my $heater = 0;
+my $heaterLastChanged = 0;
 
-my $example = <<EXAMPLE;
-Using pin #4
-Data (40): 0x1 0x23 0x0 0xd4 0xf8
-Temp =  21.2 *C, Hum = 29.1 %
-EXAMPLE
+
 
 my %config = (
 	poll_interval => 10,
 	target_temperature => 70,
 	min_relay_settle => 20,
-	sensor_pin => 4
+	sensor_pin => 4,
+	heater_pin => 17,
 );
+
+sub setHeater() {
+	open(GPIO, ">/sys/class/gpio/export") || die "Could not open GPIO";
+	print GPIO ($config{heater_pin}."\n");
+	close(GPIO);
+	open(GPIO, ">/sys/class/gpio/gpio".$config{heater_pin}."/direction") || die "Could not open GPIO";
+	print GPIO "out\n";
+	close(GPIO);
+	open(GPIO, ">/sys/class/gpio/gpio".$config{heater_pin}."/value") || die "Could not open GPIO";
+	print GPIO "$heater\n";
+	close(GPIO);
+}
 
 my $base = "http://localhost:5984/environment";
 
@@ -45,8 +55,6 @@ if (! $couch->dbExists('env_logg')) {
 	$envDB->create();
 }
 
-
-
 sub updateConfig() {
 	my $res = $configDoc->retrieve;
 	my %doc = %{$res->data};
@@ -55,7 +63,6 @@ sub updateConfig() {
 		$config{$key} = $doc{$key};
 	}
 }
-
 
 sub isdigit($) {
 	my ($key) = (@_);
@@ -73,6 +80,7 @@ sub validateConfig() {
 	$ok &&= isdigit "target_temperature";
 	$ok &&= isdigit "min_relay_settle";
 	$ok &&= isdigit "sensor_pin";
+	$ok &&= isdigit "heater_pin";
 	return $ok;
 }
 
@@ -110,20 +118,27 @@ sub upload(%) {
 }
 
 
-my %values;
+updateConfig();
+setHeater();
 my $ptime;
 my $stime;
 while (1) {
 	updateConfig();
 	if (validateConfig()) {
-		%values = getEnvValues();
+		my %values = getEnvValues();
 		if (scalar keys %values > 1) {
 			upload(%values);
+			my $wantedHeat = $config{target_temperature} > $values{actual_temperature};
+			if ($heaterLastChanged < (time - $config{min_relay_settle}) && $wantedHeat != $heater) {
+				$heater = $wantedHeat;
+				setHeater();
+				$heaterLastChanged = time;
+			}
 		}
 	} else {
 		print "Config parse failed\n";
 	}
 	$ptime = $config{poll_interval};
-	my $stime = (($ptime+1) - (time % $ptime));
+	$stime = (($ptime+1) - (time % $ptime));
 	sleep $stime;
 }
