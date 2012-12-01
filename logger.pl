@@ -102,6 +102,8 @@ sub upload(%) {
 
 my %values;
 my $ptime;
+my $stime;
+#my $oldsyncTime;
 while (1) {
 	updateConfig();
 	if (validateConfig()) {
@@ -113,5 +115,10 @@ while (1) {
 		print "Config parse failed\n";
 	}
 	$ptime = $config{poll_interval};
-	sleep (($ptime+1) - (time % $ptime));
+	my $stime = (($ptime+1) - (time % $ptime));
+	#print "Sleeping for: $stime\n";
+	#print "Time now: ".time.", time for last sync: $oldsyncTime\n";
+	sleep $stime;
+	#$oldsyncTime = time;
+	
 }
