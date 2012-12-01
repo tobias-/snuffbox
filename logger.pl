@@ -52,18 +52,28 @@ sub updateConfig() {
 	my %doc = %{$res->data};
 	my $key;
 	foreach $key (keys %doc) {
-		#print $key."=>".$doc{$key}."\n";
 		$config{$key} = $doc{$key};
+	}
+}
+
+
+sub isdigit($) {
+	my ($key) = (@_);
+	if ($config{$key} =~ /^\d+$/) {
+		return 1;
+	} else {
+		print "$key is not a digit (".$config{$key}.")\n";
+		return 0;
 	}
 }
 
 sub validateConfig() {
 	my $ok = 1;
-#	my $ok &= isdigit $config{poll_interval};
-#	my $ok &= isdigit $config{target_temperature};
-#	my $ok &= isdigit $config{min_relay_settle};
-#	my $ok &= isdigit $config{sensor_pin};
-#	return $ok;
+	$ok &&= isdigit "poll_interval";
+	$ok &&= isdigit "target_temperature";
+	$ok &&= isdigit "min_relay_settle";
+	$ok &&= isdigit "sensor_pin";
+	return $ok;
 }
 
 sub getEnvValues() {
@@ -103,7 +113,6 @@ sub upload(%) {
 my %values;
 my $ptime;
 my $stime;
-#my $oldsyncTime;
 while (1) {
 	updateConfig();
 	if (validateConfig()) {
@@ -116,9 +125,5 @@ while (1) {
 	}
 	$ptime = $config{poll_interval};
 	my $stime = (($ptime+1) - (time % $ptime));
-	#print "Sleeping for: $stime\n";
-	#print "Time now: ".time.", time for last sync: $oldsyncTime\n";
 	sleep $stime;
-	#$oldsyncTime = time;
-	
 }
