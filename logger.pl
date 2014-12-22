@@ -23,6 +23,7 @@ my %config = (
 	min_relay_settle => 20,
 	sensor_pin => 4,
 	heater_pin => 17,
+	logg_interval => 120
 );
 
 sub setHeater() {
@@ -40,19 +41,14 @@ sub setHeater() {
 my $base = "http://localhost:5984/environment";
 
 my $couch = CouchDB::Client->new(uri => 'http://localhost:5984/');
-my $configDB = $couch->newDB('env_config');
-if (! $couch->dbExists('env_config')) {
-	$configDB->create();
+my $db = $couch->newDB('env_logg');
+if (! $couch->dbExists('env_logg')) {
+	$db->create();
 }
-my $configDoc = $configDB->newDoc($name);
-if (! $configDB->docExists($name)) {
+my $configDoc = $db->newDoc($name);
+if (! $db->docExists($name)) {
 	$configDoc->data = \%config;
 	$configDoc->create();
-}
-
-my $envDB = $couch->newDB('env_logg');
-if (! $couch->dbExists('env_logg')) {
-	$envDB->create();
 }
 
 sub updateConfig() {
@@ -81,13 +77,14 @@ sub validateConfig() {
 	$ok &&= isdigit "min_relay_settle";
 	$ok &&= isdigit "sensor_pin";
 	$ok &&= isdigit "heater_pin";
+	$ok &&= isdigit "logg_interval";
 	return $ok;
 }
 
 sub getEnvValues() {
 	my %result;
 
-	open(HUMOR, "Adafruit_DHT 2302 ".$config{sensor_pin}."|");
+	open(HUMOR, "/usr/local/bin/Adafruit_DHT 2302 ".$config{sensor_pin}."|");
 	if(tell(HUMOR) == -1) {
 		die "Can't open Adafruit_DHT";
 	}
@@ -112,7 +109,7 @@ sub upload(%) {
 	$values{sensor_pin} = $config{sensor_pin};
 	$values{target_temperature} = $config{target_temperature};
 	$values{config_name} = $name;
-	my $doc = $envDB->newDoc();
+	my $doc = $db->newDoc();
 	%{$doc->data} = %values;
 	$doc->create();
 }
@@ -122,12 +119,16 @@ updateConfig();
 setHeater();
 my $ptime;
 my $stime;
+my $lastLog = 0;
 while (1) {
 	updateConfig();
 	if (validateConfig()) {
 		my %values = getEnvValues();
 		if (scalar keys %values > 1) {
-			upload(%values);
+			if ($lastLog + $config{logg_interval} < time) {
+				$lastLog = time;
+				upload(%values);
+			}
 			my $wantedHeat = $config{target_temperature} > $values{actual_temperature};
 			if ($heaterLastChanged < (time - $config{min_relay_settle}) && $wantedHeat != $heater) {
 				$heater = $wantedHeat;
