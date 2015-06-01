@@ -4,7 +4,7 @@ Designed for controlling the temperature of a snuff production with humidity and
 ## Design criterias
 1. Cold is better than fire. I.e. if something goes wrong/app crashes, don't leave the heat on
 2. Webpage to view it
-3. Don't toggle the heat too often to keep the relay from wearing out.
+3. Don't toggle the heat too often to keep the relay from wearing out
 
 ## Hardware used/recommended
 
@@ -12,7 +12,7 @@ Designed for controlling the temperature of a snuff production with humidity and
   I use a relay board with a transistor amplifying the signal.
   ( http://www.lawicel-shop.se/prod/Relay-Kit-1_873852/LAWICEL-AB_8758/ENG/SEK )
   The diode on the relay board is _very_ nice when trying to debug it.
-* I AM2302 use  as the sensor, because it was the only affordable humidity and temperature sensor available.
+* I use AM2302 as the sensor, because it was the only affordable humidity and temperature sensor available.
   http://www.adafruit.com/products/393
 
 ## Installation
