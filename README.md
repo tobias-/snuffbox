@@ -31,5 +31,5 @@ sudo cp logger.py Adafruit_DHT /usr/local/bin/
 ```
 To make it start at bootup and keep it alive, add it to inittab. There are other ways, but this was the easiest way that worked most reliably back in '12. If it doesn't work, let me know, and I'll make an upstart script.
 ```
-echo 'logg:23:respawn:/usr/local/bin/logger.py' | sudo tee /etc/inittab
+echo 'logg:23:respawn:/usr/local/bin/logger.py' | sudo tee -a /etc/inittab
 ```
