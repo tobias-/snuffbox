@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'>
+<title>Temperature monitor</title>
+<link rel="stylesheet" href="style/main.css" type="text/css">
+</head>
+<body>
+	<table id="heaterTable">
+		<tr>
+			<th>Temperature</th>
+		</tr>
+		<tr>
+			<td id="temperature">0.00°</td>
+		</tr>
+		<tr>
+			<th>Humidity</th>
+		</tr>
+		<tr>
+			<td id="humidity">0.00%</td>
+		</tr>
+		<tr>
+			<td id="dataAge">too old</td>
+		</tr>
+		<tr>
+			<td>Target temperature <input type="text" id="targetTemperature" value="error"></td>
+		</tr>
+	</table>
+
+	<!-- 	<div id="content"></div> -->
+</body>
+<script src="/_utils/script/sha1.js"></script>
+<script src="/_utils/script/json2.js"></script>
+<script src="/_utils/script/jquery.js"></script>
+<script src="/_utils/script/jquery.couch.js"></script>
+<script src="script/showTemperature.js"></script>
+<script src="vendor/highcharts/js/highcharts.js"<!-- templates used by app.js -->
+
+  <!-- <script src="script/chartTemp.js"></script>-->
+
+</html>
